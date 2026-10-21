@@ -4,7 +4,10 @@ A browser editor for the `jenkins.views`, `jenkins.authorizationStrategy`
 (role-based) and `credentials` blocks of a Jenkins
 Configuration-as-Code file. It needs no build step and no server.
 
-## Run
+# App is available online
+https://harchschoolboy.github.io/jcasc-visual-editor/
+
+## Local run
 
 Open `index.html` in Chrome or Edge. Opening it from `file://` works. Saving
 straight to disk uses the File System Access API, so it needs a Chromium-based
