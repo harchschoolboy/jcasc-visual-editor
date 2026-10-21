@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JCasC Visual Editor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">JCasC <span>Visual Editor</span></div>
+    <div class="group">
+      <button id="btnOpen" title="Open a JCasC YAML file from disk">Open JCasC…</button>
+      <button id="btnPaste" title="Paste JCasC YAML text">Paste…</button>
+      <button id="btnJobs" title="Select the folder with Job DSL definitions (e.g. jenkins/jobs)">Jobs folder…</button>
+      <button id="btnRescan" class="ghost" title="Re-read the jobs folder" hidden>↻</button>
+    </div>
+    <div id="fileInfo" class="info"></div>
+    <div class="spacer"></div>
+    <div class="group">
+      <button id="btnUndo" class="ghost" title="Undo (Ctrl+Z)">↶</button>
+      <button id="btnRedo" class="ghost" title="Redo (Ctrl+Y)">↷</button>
+      <button id="btnReset" class="ghost" title="Discard all edits">Reset</button>
+    </div>
+    <div class="group">
+      <button id="btnSave" class="primary" title="Write back to the opened file (Ctrl+S)">Save</button>
+      <button id="btnDownload" title="Download the resulting YAML">Download</button>
+      <button id="btnCopy" title="Copy the resulting YAML">Copy</button>
+      <button id="btnCode" class="toggle" title="Show/hide the resulting code">&lt;/&gt; Code</button>
+    </div>
+    <input type="file" id="fileInput" accept=".yml,.yaml,text/yaml" hidden>
+    <input type="file" id="dirInput" webkitdirectory multiple hidden>
+  </header>
+
+  <main id="main">
+    <section id="left">
+      <div id="welcome" class="welcome">
+        <h1>JCasC Visual Editor</h1>
+        <p>Edit <b>Views</b>, <b>Credentials</b> and <b>Roles</b> (role-based authorization) of a Jenkins Configuration-as-Code file and see the result live.</p>
+        <ol>
+          <li><button data-action="open">Open JCasC file</button> or <button data-action="paste">paste YAML</button> (or drop a <code>.yml</code> here)</li>
+          <li><button data-action="jobs">Pick the jobs folder</button> with <code>definition.groovy</code> files (or drop the folder here)</li>
+        </ol>
+        <p class="muted">Only the <code>jenkins.views</code>, <code>jenkins.viewsTabBar</code>,
+          <code>jenkins.authorizationStrategy</code> and
+          <code>credentials.system.domainCredentials</code> blocks are rewritten — the rest of the file stays byte-identical.</p>
+      </div>
+
+      <div id="workspace" hidden>
+        <nav class="modes">
+          <button data-mode="views" class="mode">Views <span class="count" id="cntViews"></span></button>
+          <button data-mode="creds" class="mode">Credentials <span class="count" id="cntCreds"></span></button>
+          <button data-mode="roles" class="mode">Roles <span class="count" id="cntRoles"></span></button>
+          <div class="spacer"></div>
+          <span id="dirtyBadges"></span>
+        </nav>
+
+        <div id="viewsPane" class="pane">
+          <div class="view-board">
+            <div class="jenkins">
+              <div class="jenkins-tabs" id="viewTabs"></div>
+              <div class="jenkins-body" id="viewPreview"></div>
+            </div>
+            <div id="orphans" class="orphans"></div>
+          </div>
+          <aside id="viewForm" class="form"></aside>
+        </div>
+
+        <div id="credsPane" class="pane">
+          <div class="cred-board">
+            <div class="cred-toolbar">
+              <input id="credFilter" type="search" placeholder="Filter by id, description, type, variable…">
+              <select id="credAddType" title="Credential type"></select>
+              <button id="credAdd">+ Add credential</button>
+            </div>
+            <div id="credTable" class="cred-table"></div>
+          </div>
+          <aside id="credForm" class="form"></aside>
+        </div>
+
+        <div id="rolesPane" class="pane">
+          <div class="roles-board">
+            <div class="roles-toolbar">
+              <div class="seg" id="rolesViewSeg">
+                <button data-rv="users" title="Who has which role">Users × Roles</button>
+                <button data-rv="perms" title="What each role grants">Roles × Permissions</button>
+              </div>
+              <label class="merge" title="Show global/items/agents roles with the same name as one column; ticking it adds the user to all of them"><input type="checkbox" id="mergeRoles"> Merge same-named roles</label>
+              <input id="principalFilter" type="search" placeholder="Filter users / permissions…">
+              <select id="roleAddType" title="Role type"></select>
+              <button id="roleAdd">+ Role</button>
+            </div>
+            <div id="rolesMatrix" class="roles-matrix"></div>
+          </div>
+          <aside id="roleForm" class="form"></aside>
+        </div>
+
+        <div id="issues" class="issues"></div>
+      </div>
+    </section>
+
+    <div id="splitter" title="Drag to resize"></div>
+
+    <section id="right">
+      <div class="code-toolbar">
+        <div class="seg" id="codeModes">
+          <button data-code="full">Full file</button>
+          <button data-code="changes">Changes</button>
+          <button data-code="views">views:</button>
+          <button data-code="creds">domainCredentials:</button>
+          <button data-code="auth">authorizationStrategy:</button>
+        </div>
+        <div class="spacer"></div>
+        <span id="codeStat" class="muted"></span>
+        <button id="btnCopyCode" class="ghost" title="Copy what is shown">Copy</button>
+      </div>
+      <div id="codeWrap"><pre id="code"></pre></div>
+    </section>
+  </main>
+
+  <div id="dropOverlay" hidden><div>Drop a JCasC <code>.yml</code> file or a jobs folder</div></div>
+
+  <dialog id="pasteDlg">
+    <form method="dialog">
+      <h3>Paste JCasC YAML</h3>
+      <textarea id="pasteText" spellcheck="false" placeholder="jenkins:&#10;  views:&#10;    - list: …"></textarea>
+      <div class="dlg-actions">
+        <button value="cancel" class="ghost">Cancel</button>
+        <button value="ok" class="primary" id="pasteOk">Load</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="jobsDlg">
+    <form method="dialog">
+      <h3>Jobs source</h3>
+      <div id="jobsDlgBody"></div>
+      <div class="dlg-actions">
+        <button value="ok" class="primary">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" hidden></div>
+
+  <script src="vendor/yaml.min.js"></script>
+  <script src="src/core.js"></script>
+  <script src="src/app-base.js"></script>
+  <script src="src/app-io.js"></script>
+  <script src="src/app-views.js"></script>
+  <script src="src/app-creds.js"></script>
+  <script src="src/app-roles.js"></script>
+  <script src="src/app-main.js"></script>
+</body>
+</html>

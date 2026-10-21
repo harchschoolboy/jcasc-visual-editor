@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=./jcasc-schema.json
+---
+jenkins:
+  numExecutors: 2 # keep me
+  views:
+    - list:
+        name: "Dev"
+        columns:
+          - "status"
+          - "jobName"
+        jobNames:
+          - "U - Build"
+          - "u - deploy"
+    - list:
+        columns:
+          - "status"
+        includeRegex: "P - .*"
+        name: "Production"
+
+    - all:
+        name: "all"
+  viewsTabBar: "standard"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: "Git Access"
+              username: git
+              privateKeySource:
+                directEntry:
+                  privateKey: ${GIT_KEY}
+
+          - usernamePassword:
+              scope: GLOBAL
+              id: "API"
+              username: "git"
+              password: ${API_TOKEN}
+
+# trailing comment
+unclassified:
+  location:
+    url: ${URL}

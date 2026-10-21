@@ -1,0 +1,26 @@
+{
+  "name": "jcasc-visual-editor",
+  "version": "1.0.0",
+  "description": "Browser editor for Jenkins JCasC views and credentials",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/core.test.js",
+    "vendor": "esbuild node_modules/yaml/browser/index.js --bundle --minify --format=iife --global-name=YAML --outfile=vendor/yaml.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harchschoolboy/jcasc-visual-editor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/harchschoolboy/jcasc-visual-editor/issues"
+  },
+  "homepage": "https://github.com/harchschoolboy/jcasc-visual-editor#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "yaml": "^2.9.1"
+  }
+}
